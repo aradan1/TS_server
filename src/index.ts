@@ -18,8 +18,14 @@ const saltRounds = 10;
 const app = express();
 app.use(bp.json());
 app.use(bp.urlencoded({ extended: true}));
+app.use((req,res,next)=>{
+    res.setHeader('Access-Control-Allow-Origin','*');
+    res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE');
+    res.setHeader('Access-Control-Allow-Headers',['Content-Type','Authorization']);
+    next(); 
+})
 
-
+// SECRET_KEY would be and env constant located in a file outside the code
 export const SECRET_KEY: Secret = 'secret-key';
 export interface CustomRequest extends Request {
  token: string | JwtPayload;
