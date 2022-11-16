@@ -1,9 +1,11 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import bp from 'body-parser';
 import sqlite3 from 'sqlite3';
 import path from "path";
-
 import bcrypt from 'bcrypt';
+import jwt, { Secret, JwtPayload } from 'jsonwebtoken';
+
+
 
 // connect to db
 const db = new sqlite3.Database(path.resolve('db.sqlite'), sqlite3.OPEN_READWRITE, (err) => {
@@ -18,8 +20,35 @@ app.use(bp.json());
 app.use(bp.urlencoded({ extended: true}));
 
 
-// get all users
-app.get('/', (req, res) => {
+export const SECRET_KEY: Secret = 'secret-key';
+export interface CustomRequest extends Request {
+ token: string | JwtPayload;
+}
+
+
+
+// Authorization token middleware
+export const auth = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token = req.header('Authorization')?.replace('Bearer ', '');
+   
+      if (!token) {
+        throw new Error();
+      }
+   
+      const decoded = jwt.verify(token, SECRET_KEY);
+      (req as CustomRequest).token = decoded;
+   
+      next();
+    } catch (err) {
+      res.status(401).send('Please authenticate');
+    }
+};
+
+
+
+// GET all users
+app.get('/', (req: Request, res: Response) => {
     try{
 
         sql = 'SELECT id, username FROM users';
@@ -33,8 +62,8 @@ app.get('/', (req, res) => {
     }
 })
 
-// get user by ID
-app.get('/:user_id', (req, res) => {
+// GET user by ID
+app.get('/:user_id', (req: Request, res: Response) => {
     try{
 
         sql = 'SELECT id, username FROM users WHERE id=?';
@@ -48,8 +77,8 @@ app.get('/:user_id', (req, res) => {
     }
 })
 
-// register a user unless USERNAME already in use
-app.post('/signup', (req, res) => {
+// POST register a user unless USERNAME already in use
+app.post('/signup', (req: Request, res: Response) => {
     try {
             
         const {username, password} = req.body;
@@ -79,12 +108,12 @@ app.post('/signup', (req, res) => {
     }
 })
 
-// log in a user
-app.post('/login', (req, res) => {
+// POST log in a user through jsontokens
+app.post('/login', (req: Request, res: Response) => {
     try {
             
         const {username, password} = req.body;
-        sql = 'SELECT password FROM users WHERE username = ?';
+        sql = 'SELECT id,password FROM users WHERE username = ?';
         db.get(sql, username, (err, row) => {
             if (err) return res.json({ status: 300, success: false, error: err})
             if (!row) return res.json({ status: 400, success: false, error: "user not found"})
@@ -95,10 +124,12 @@ app.post('/login', (req, res) => {
 
                     return res.json({ status: 400, success: false});
                 }else{
-                        
-                    //req.session.user = username;
-                    //req.session.userid = success;
-                    return res.json({ status: 200, success: true});
+                    const id = row.id.toString;
+                    const token = jwt.sign({ _id: id, name: username }, SECRET_KEY, {
+                        expiresIn: '2 days',
+                    });
+                 
+                    return res.status(200).send({ user: { id, username }, token: token });
                 }
             })
         })
@@ -108,8 +139,8 @@ app.post('/login', (req, res) => {
     }
 })
 
-// change a user's USERNAME given it's ID
-app.put('/:user_id', (req, res) => {
+// PUT change a user's USERNAME given it's ID
+app.put('/:user_id', auth, (req: Request, res: Response) => {
     try {
         
         const {username} = req.body;
@@ -124,8 +155,8 @@ app.put('/:user_id', (req, res) => {
     }
 })
 
-// delete a user given it's ID
-app.delete('/:user_id', (req, res) => {
+// DELETE a user given it's ID
+app.delete('/:user_id', auth, (req: Request, res: Response) => {
     try{
 
         sql = 'DELETE FROM users WHERE id = ?';
