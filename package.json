@@ -6,10 +6,13 @@
   "author": "Dani <daniellopez.macia@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "initdb": "ts-node src/initdb.ts",
+    "test": "echo \"No test specified\" && exit 1"
   },
   "dependencies": {
     "express": "^4.18.2",
+    "sqlite3": "^5.1.2",
     "ts-node": "^10.9.1"
   },
   "devDependencies": {

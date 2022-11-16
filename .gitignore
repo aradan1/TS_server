@@ -13,6 +13,9 @@
 /dist
 /seeders
 
+# dtabase
+db.sqlite
+
 # misc
 .DS_Store
 .env.local
