@@ -151,7 +151,6 @@ app.put('/:user_id', auth, (req: Request, res: Response) => {
         
         const {username} = req.body;
         sql = 'UPDATE users SET username = ? WHERE id = ?';
-        console.log(req.body)
         db.run(sql, [username, req.params.user_id], (err) => {
             if (err) return res.json({ status: 300, success: false, error: err})
             return res.json({ status: 200, success: true})
