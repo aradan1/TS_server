@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "initdb": "ts-node src/initdb.ts",
+    "initdb": "type nul > db.sqlite && ts-node src/initdb.ts",
     "test": "jest"
   },
   "dependencies": {
